@@ -1,7 +1,8 @@
-import logo from "./logo.svg";
-import Header from "./components/Header";
-import Play from "./components/Play";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { Provider } from "react-redux";
+import Allroutes from "./routes";
+import { store } from "./store/index.js";
+import { SnackbarProvider } from "notistack";
 const theme = createTheme({
   palette: {
     primary: {
@@ -32,8 +33,11 @@ function App() {
   return (
     <div>
       <ThemeProvider theme={theme}>
-        <Header />
-        <Play />
+        <Provider store={store}>
+          <SnackbarProvider hideIconVariant>
+            <Allroutes />
+          </SnackbarProvider>
+        </Provider>
       </ThemeProvider>
     </div>
   );

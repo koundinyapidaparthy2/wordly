@@ -11,56 +11,175 @@ import Button from "@mui/material/Button";
 import AlphabetBox from "./AlphabetBox";
 import { checkValidArray, buttonList } from "../utils";
 import BackspaceIcon from "@mui/icons-material/Backspace";
-
+import { useDispatch, useSelector } from "react-redux";
+import { enqueueSnackbar } from "notistack";
+import Grow from "./Grow";
 const Play = () => {
+  const dispatch = useDispatch();
   const theme = useTheme();
+  const email = useSelector((state) => state.email);
   const [open, setOpen] = React.useState(true);
   const [wordLength, setWordLength] = React.useState(5);
   const [playDetails, setPlayDetails] = React.useState({
     letters: [],
     activeStep: 0,
     innerActiveStep: 0,
+    choiceWord: "",
+    wordLength: 5,
   });
+  const [disableWordList, setDisableWordList] = React.useState([]);
   const handleChange = (event) => {
     setWordLength(event.target.value);
   };
-  const handleDialogClose = () => {
-    let letters = [];
-    for (let i = 0; i < wordLength; i++) {
-      letters.push([]);
-      for (let j = 0; j < wordLength; j++) {
-        letters[i][j] = {
-          letter: "",
-        };
+  const handleDialogClose = async () => {
+    const url = `https://qnt1r5fod2.execute-api.us-east-2.amazonaws.com/dev/letsplay?email=${email}&word=${wordLength}`;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Encoding": "gzip, deflate, br",
+          Accept: "*/*",
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.choiceword) {
+        let letters = [];
+        for (let i = 0; i < wordLength; i++) {
+          letters.push([]);
+          for (let j = 0; j < wordLength; j++) {
+            letters[i][j] = {
+              letter: "",
+            };
+          }
+        }
+        console.log({ data });
+        setPlayDetails({
+          activeStep: 0,
+          innerActiveStep: 0,
+          letters,
+          choiceWord: data.choiceword,
+          wordLength,
+        });
+        setOpen((prev) => !prev);
+      } else if (data.error && data.message) {
+        enqueueSnackbar({
+          message: data.message,
+          preventDuplicate: true,
+          autoHideDuration: 3000,
+          variant: "error",
+        });
       }
+    } catch (error) {
+      enqueueSnackbar({
+        message: error.message,
+        preventDuplicate: true,
+        autoHideDuration: 3000,
+        variant: "error",
+      });
     }
-    setPlayDetails({
-      activeStep: 0,
-      innerActiveStep: 0,
-      letters,
-    });
-    setOpen((prev) => !prev);
   };
 
   const handleEnter = () => {
+    let weWon = false;
+    const choiceWord = playDetails.choiceWord;
     if (playDetails.innerActiveStep > wordLength - 1) {
+      const currentStep = playDetails.activeStep;
+      console.log({ currentStep });
+      const prevPlayDetails = playDetails.letters.slice(0, currentStep);
+      let currentPlayDetails = playDetails.letters[currentStep];
+      const nextPlayDetails = playDetails.letters.splice(currentStep + 1);
+      currentPlayDetails = currentPlayDetails.map(({ letter }, index) => {
+        const updatedLetter = letter.toLowerCase();
+        if (updatedLetter.toLowerCase() === Array.from(choiceWord)[index]) {
+          return {
+            letter: letter,
+            exact: true,
+          };
+        }
+        if (choiceWord.includes(updatedLetter)) {
+          return {
+            letter: letter,
+            contains: true,
+          };
+        } else {
+          return {
+            letter: letter,
+            error: true,
+          };
+        }
+      });
+      let successInThisStep =
+        currentPlayDetails.find(({ error, contains }) => error || contains) ||
+        {};
+      if (!successInThisStep.letter) {
+        weWon = true;
+      }
+      const finalPlayDetails = [
+        ...prevPlayDetails,
+        currentPlayDetails,
+        ...nextPlayDetails,
+      ];
+      console.log({ finalPlayDetails });
+
       setPlayDetails((prev) => ({
         ...prev,
         activeStep: prev.activeStep + 1,
         innerActiveStep: 0,
+        letters: finalPlayDetails,
       }));
+    } else {
+      enqueueSnackbar({
+        message: `Minimum ${wordLength} Characters required`,
+        preventDuplicate: true,
+        autoHideDuration: 3000,
+        variant: "error",
+      });
+    }
+
+    if (playDetails.activeStep >= wordLength - 1 && !weWon) {
+      setPlayDetails((prev) => ({
+        activeStep: 0,
+        innerActiveStep: 0,
+        letters: [],
+      }));
+      setOpen((prev) => !prev);
+      enqueueSnackbar({
+        message: `We lost the word 😔`,
+        anchorOrigin: { horizontal: "center", vertical: "top" },
+        TransitionComponent: Grow,
+        preventDuplicate: true,
+        autoHideDuration: 3000,
+        variant: "error",
+      });
+    } else if (weWon) {
+      setPlayDetails((prev) => ({
+        activeStep: 0,
+        innerActiveStep: 0,
+        letters: [],
+      }));
+      enqueueSnackbar({
+        message: `We won the word 🎉 ${choiceWord}`,
+        anchorOrigin: { horizontal: "center", vertical: "top" },
+        TransitionComponent: Grow,
+        preventDuplicate: true,
+        autoHideDuration: 3000,
+        variant: "error",
+      });
     }
   };
 
   const handleBackSpace = () => {
     if (playDetails.innerActiveStep != 0) {
       const newPlayDetails = playDetails.letters;
-      newPlayDetails[playDetails.activeStep][playDetails.innerActiveStep - 1] =
-        {
-          letter: "",
-        };
-      console.log();
+      playDetails.letters[playDetails.activeStep][
+        playDetails.innerActiveStep - 1
+      ] = {
+        letter: "",
+      };
       setPlayDetails((prev) => ({
+        ...prev,
         letters: playDetails.letters,
         activeStep: prev.activeStep,
         innerActiveStep: prev.innerActiveStep - 1,
@@ -79,12 +198,25 @@ const Play = () => {
         letter,
       };
       setPlayDetails((prev) => ({
+        ...prev,
         letters: playDetails.letters,
         activeStep: prev.activeStep,
         innerActiveStep: prev.innerActiveStep + 1,
       }));
     }
   };
+
+  React.useEffect(() => {
+    const letters = playDetails.letters || [];
+    const finalDisableWords = [];
+    letters.every((rowWise) => {
+      rowWise.every(({ letter, error }) => {
+        finalDisableWords.push(letter);
+      });
+    });
+    setDisableWordList(finalDisableWords);
+    return () => {};
+  }, [playDetails.activeStep]);
   return (
     <React.Fragment>
       {!open ? (
@@ -170,11 +302,16 @@ const Play = () => {
                         />
                       ) : null}
                       {subArr.map((letter) => {
+                        const error =
+                          disableWordList.filter(
+                            (eachWord) => eachWord === letter
+                          ).length > 0;
                         return (
                           <AlphabetBox
                             letter={letter}
                             defaultBox={true}
-                            clickable={true}
+                            error={error}
+                            clickable={error ? false : true}
                             onClick={handleButtonClick}
                           />
                         );
