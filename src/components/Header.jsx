@@ -23,6 +23,7 @@ const Header = () => {
   const handleClose = () => {
     dispatch(setEmail(""));
     handlePopper();
+    localStorage.setItem("email", "");
     navigate("/signin");
   };
   return (
