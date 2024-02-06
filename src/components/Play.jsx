@@ -54,7 +54,6 @@ const Play = () => {
             };
           }
         }
-        console.log({ data });
         setPlayDetails({
           activeStep: 0,
           innerActiveStep: 0,
@@ -86,7 +85,6 @@ const Play = () => {
     const choiceWord = playDetails.choiceWord;
     if (playDetails.innerActiveStep > wordLength - 1) {
       const currentStep = playDetails.activeStep;
-      console.log({ currentStep });
       const prevPlayDetails = playDetails.letters.slice(0, currentStep);
       let currentPlayDetails = playDetails.letters[currentStep];
       const nextPlayDetails = playDetails.letters.splice(currentStep + 1);
@@ -121,7 +119,6 @@ const Play = () => {
         currentPlayDetails,
         ...nextPlayDetails,
       ];
-      console.log({ finalPlayDetails });
 
       setPlayDetails((prev) => ({
         ...prev,
@@ -172,7 +169,6 @@ const Play = () => {
 
   const handleBackSpace = () => {
     if (playDetails.innerActiveStep != 0) {
-      const newPlayDetails = playDetails.letters;
       playDetails.letters[playDetails.activeStep][
         playDetails.innerActiveStep - 1
       ] = {
@@ -209,12 +205,15 @@ const Play = () => {
   React.useEffect(() => {
     const letters = playDetails.letters || [];
     const finalDisableWords = [];
-    letters.every((rowWise) => {
-      rowWise.every(({ letter, error }) => {
-        finalDisableWords.push(letter);
+    letters.forEach((rowWise) => {
+      rowWise.forEach(({ letter, error }) => {
+        if (error) {
+          finalDisableWords.push(letter);
+        }
       });
     });
     setDisableWordList(finalDisableWords);
+
     return () => {};
   }, [playDetails.activeStep]);
   return (
