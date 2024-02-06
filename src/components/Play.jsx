@@ -14,8 +14,10 @@ import BackspaceIcon from "@mui/icons-material/Backspace";
 import { useDispatch, useSelector } from "react-redux";
 import { enqueueSnackbar } from "notistack";
 import Grow from "./Grow";
+import Checkbox from "@mui/material/Checkbox";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
 const Play = () => {
-  const dispatch = useDispatch();
   const theme = useTheme();
   const email = useSelector((state) => state.email);
   const [open, setOpen] = React.useState(true);
@@ -156,13 +158,14 @@ const Play = () => {
         innerActiveStep: 0,
         letters: [],
       }));
+      setOpen((prev) => !prev);
       enqueueSnackbar({
-        message: `We won the word 🎉 ${choiceWord}`,
+        message: `We won the word ${choiceWord} 🎉`,
         anchorOrigin: { horizontal: "center", vertical: "top" },
         TransitionComponent: Grow,
         preventDuplicate: true,
         autoHideDuration: 3000,
-        variant: "error",
+        variant: "success",
       });
     }
   };
@@ -383,6 +386,52 @@ const Play = () => {
                 >
                   Lets play a game!.....
                 </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked
+                        sx={{
+                          color: theme.palette.primary.exact,
+                          "&.Mui-checked": {
+                            color: theme.palette.primary.exact,
+                          },
+                        }}
+                      />
+                    }
+                    label="Exact letter"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked
+                        sx={{
+                          color: theme.palette.primary.contains,
+                          "&.Mui-checked": {
+                            color: theme.palette.primary.contains,
+                          },
+                        }}
+                      />
+                    }
+                    label="Letter exist in the word"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked
+                        sx={{
+                          color: theme.palette.primary.error,
+                          "&.Mui-checked": {
+                            color: theme.palette.primary.error,
+                          },
+                        }}
+                      />
+                    }
+                    label="Letter Does not exist"
+                  />
+                </FormGroup>
               </Grid>
               <Grid item xs={12}>
                 <Grid container justifyContent={"center"} alignItems={"center"}>
