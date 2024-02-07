@@ -70,7 +70,7 @@ const Play = () => {
       const data = await response.json();
       if (response.ok && data.choiceword) {
         let letters = [];
-        for (let i = 0; i < wordLength; i++) {
+        for (let i = 0; i < wordLength + 1; i++) {
           letters.push([]);
           for (let j = 0; j < wordLength; j++) {
             letters[i][j] = {
@@ -159,7 +159,7 @@ const Play = () => {
       });
     }
 
-    if (playDetails.activeStep >= wordLength - 1 && !weWon) {
+    if (playDetails.activeStep >= wordLength && !weWon) {
       storeUserMatchHistory(choiceWord, false);
       setPlayDetails((prev) => ({
         activeStep: 0,
@@ -168,7 +168,7 @@ const Play = () => {
       }));
       setOpen((prev) => !prev);
       enqueueSnackbar({
-        message: `We lost the word 😔`,
+        message: `We lost the word ${choiceWord} 😔`,
         anchorOrigin: { horizontal: "center", vertical: "top" },
         TransitionComponent: Grow,
         preventDuplicate: true,
