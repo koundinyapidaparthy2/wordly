@@ -11,7 +11,7 @@ import Button from "@mui/material/Button";
 import AlphabetBox from "./AlphabetBox";
 import { checkValidArray, buttonList } from "../utils";
 import BackspaceIcon from "@mui/icons-material/Backspace";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { enqueueSnackbar } from "notistack";
 import Grow from "./Grow";
 import Checkbox from "@mui/material/Checkbox";
@@ -33,10 +33,31 @@ const Play = () => {
   const handleChange = (event) => {
     setWordLength(event.target.value);
   };
+
+  const storeUserMatchHistory = async (choiceWord, win) => {
+    const url = `https://iwup0n6849.execute-api.us-east-2.amazonaws.com/dev/storeMatchResult?email=${email}&result=${
+      win ? "Win" : "Loose"
+    }:${choiceWord},`;
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        Accept: "*/*",
+      },
+    });
+  };
+
   const handleDialogClose = async () => {
     const url = `https://qnt1r5fod2.execute-api.us-east-2.amazonaws.com/dev/letsplay?email=${email}&word=${wordLength}`;
 
     try {
+      enqueueSnackbar({
+        message: "Just for a sec",
+        preventDuplicate: true,
+        autoHideDuration: 3000,
+        variant: "info",
+      });
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -45,6 +66,7 @@ const Play = () => {
           Accept: "*/*",
         },
       });
+
       const data = await response.json();
       if (response.ok && data.choiceword) {
         let letters = [];
@@ -138,6 +160,7 @@ const Play = () => {
     }
 
     if (playDetails.activeStep >= wordLength - 1 && !weWon) {
+      storeUserMatchHistory(choiceWord, false);
       setPlayDetails((prev) => ({
         activeStep: 0,
         innerActiveStep: 0,
@@ -153,6 +176,7 @@ const Play = () => {
         variant: "error",
       });
     } else if (weWon) {
+      storeUserMatchHistory(choiceWord, false);
       setPlayDetails((prev) => ({
         activeStep: 0,
         innerActiveStep: 0,
@@ -216,7 +240,6 @@ const Play = () => {
       });
     });
     setDisableWordList(finalDisableWords);
-
     return () => {};
   }, [playDetails.activeStep]);
   return (

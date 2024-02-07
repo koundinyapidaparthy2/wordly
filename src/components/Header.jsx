@@ -24,7 +24,7 @@ const Header = () => {
     dispatch(setEmail(""));
     handlePopper();
     localStorage.setItem("email", "");
-    navigate("/signin");
+    navigate("/login");
   };
   return (
     <Grid
@@ -43,6 +43,10 @@ const Header = () => {
           fontWeight={900}
           sx={{
             marginLeft: "20px",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            navigate("/");
           }}
         >
           Wordly
@@ -57,6 +61,9 @@ const Header = () => {
                   color: theme.palette.primary.custom,
                   cursor: "pointer",
                 }}
+                onClick={() => {
+                  navigate("/matches");
+                }}
               />
             </Grid>
           ) : null}
@@ -69,7 +76,7 @@ const Header = () => {
                 cursor: "pointer",
               }}
               onClick={() => {
-                !email ? navigate("/signin") : handlePopper();
+                !email ? navigate("/login") : handlePopper();
               }}
             />
           </Grid>
