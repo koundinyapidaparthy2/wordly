@@ -176,7 +176,7 @@ const Play = () => {
         variant: "error",
       });
     } else if (weWon) {
-      storeUserMatchHistory(choiceWord, false);
+      storeUserMatchHistory(choiceWord, true);
       setPlayDetails((prev) => ({
         activeStep: 0,
         innerActiveStep: 0,
